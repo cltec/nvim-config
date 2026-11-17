@@ -3,7 +3,7 @@ return {
 		"zbirenbaum/copilot.lua",
 		cmd = "Copilot",
 		event = "InsertEnter",
-		build = ":Copilot auth",
+		-- Authenticate interactively with :Copilot auth after installation.
 		opts = {
 			suggestion = { enabled = false },
 			panel = {

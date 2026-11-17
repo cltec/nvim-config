@@ -15,20 +15,12 @@ return {
 			"sidlatau/neotest-dart",
 		},
 		config = function()
-			local pythonPath
-			if vim.fn.has("win32") == 1 then
-				-- Set the path for Windows
-				pythonPath = ".venv/Scripts/python"
-			else
-				-- Set the path for Linux or macOS
-				pythonPath = ".venv/bin/python"
-			end
 			require("neotest").setup({
 				adapters = {
 					require("neotest-python")({
 						dap = { justMyCode = false },
 						runner = "pytest",
-						python = pythonPath,
+						-- Let neotest detect the project's virtualenv or system Python.
 					}),
 					require("neotest-go"),
 					-- require("neotest-java"),

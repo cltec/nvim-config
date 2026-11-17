@@ -112,7 +112,7 @@ return {
 		ft = { "go", "gomod", "gowork", "gosum", "lua", "markdown", "python", "typescript", "javascript" },
 		config = function()
 			require("fidget").setup({})
-			local servers = { "lua_ls", "ty", "marksman", "gopls", "ts_ls" }
+			local servers = { "lua_ls", "ty", "marksman", "gopls", "ts_ls", "jdtls" }
 			local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 			vim.lsp.config("lua_ls", {
@@ -133,7 +133,8 @@ return {
 
 			require("mason-lspconfig").setup({
 				ensure_installed = servers,
-				automatic_enable = true,
+				-- nvim-jdtls owns Java startup, workspaces, and debug bundles.
+				automatic_enable = { exclude = { "jdtls" } },
 			})
 
 			-- Use LspAttach autocommand to only map the following keys

@@ -43,6 +43,7 @@ return {
       "gosum",
       "markdown",
       "markdown_inline",
+      "yaml", -- CodeCompanion chat metadata
     }
 
     ts.setup({
@@ -57,11 +58,10 @@ return {
       group = group,
       pattern = parsers,
       callback = function(args)
-        vim.treesitter.start(args.buf)
-
-        pcall(function()
+        -- Parsers install asynchronously on a fresh machine.
+        if pcall(vim.treesitter.start, args.buf) then
           vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-        end)
+        end
       end,
     })
   end,

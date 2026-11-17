@@ -15,15 +15,10 @@ return {
 		},
 		ft = { "java" },
 		config = function()
-			local home = os.getenv("HOME")
+			local java_runtimes = require("config.java").runtimes()
 			local mason_install_root = require("mason.settings").current.install_root_dir
 			require("fidget").setup({})
 
-			require("mason-lspconfig").setup({
-				ensure_installed = { "jdtls" },
-				automatic_enable = false,
-			})
-			local xdg_data_home = vim.env.XDG_DATA_HOME or vim.fn.stdpath("data")
 			local opts = {
 				root_dir = function(fname)
 					return vim.fs.root(fname, { ".git", "mvnw", "gradlew" })
@@ -47,18 +42,18 @@ return {
 				-- How to run jdtls. This can be overridden to a full java command-line
 				-- if the Python wrapper script doesn't suffice.
 				cmd = {
-					vim.fn.exepath("jdtls"),
+					"jdtls",
 					"--jvm-arg=" .. string.format(
 						"-javaagent:%s",
-						vim.fn.expand(xdg_data_home .. "/mason/packages/jdtls/lombok.jar")
+						mason_install_root .. "/packages/jdtls/lombok.jar"
 					),
-					--  "--jvm-arg=-javaagent:" .. xdg_data_home .. "/nvim-data/mason/packages/jdtls/lombok.jar",
 				},
 				full_cmd = function(opts)
 					local fname = vim.api.nvim_buf_get_name(0)
 					local root_dir = opts.root_dir(fname)
 					local project_name = opts.project_name(root_dir)
 					local cmd = vim.deepcopy(opts.cmd)
+					cmd[1] = vim.fn.exepath("jdtls")
 					-- log the project_name variable
 					if project_name then
 						vim.notify("project_name: " .. project_name)
@@ -77,29 +72,25 @@ return {
 				test = true,
 			}
 
-			-- Find the extra bundles that should be passed on the jdtls command-line
-			-- if nvim-dap is enabled with java debug/test.
-			local mason_registry = require("mason-registry")
-			local bundles = {} ---@type string[]
-			local java_dbg_pkg = mason_registry.get_package("java-debug-adapter")
-			local java_dbg_path = mason_install_root .. "/packages/" .. java_dbg_pkg.name
-			local jar_patterns = {
-				java_dbg_path .. "/extension/server/com.microsoft.java.debug.plugin-*.jar",
-			}
-			-- java-test also depends on java-debug-adapter.
-			local java_test_pkg = mason_registry.get_package("java-test")
-			local java_test_path = mason_install_root .. "/packages/" .. java_test_pkg.name
-			vim.list_extend(jar_patterns, {
-				java_test_path .. "/extension/server/*.jar",
-			})
-			for _, jar_pattern in ipairs(jar_patterns) do
-				for _, bundle in ipairs(vim.split(vim.fn.glob(jar_pattern), "\n")) do
-					table.insert(bundles, bundle)
+			-- Resolve installed bundles at attach time, even before the registry is ready.
+			local function get_bundles()
+				local bundles = {}
+				local jar_patterns = {
+					mason_install_root .. "/packages/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar",
+					mason_install_root .. "/packages/java-test/extension/server/*.jar",
+				}
+				for _, jar_pattern in ipairs(jar_patterns) do
+					vim.list_extend(bundles, vim.fn.glob(jar_pattern, false, true))
 				end
+				return bundles
 			end
 
 			---
 			local function attach_jdtls()
+				-- Mason retriggers FileType after installation on a fresh machine.
+				if vim.fn.executable("jdtls") ~= 1 then
+					return
+				end
 				local fname = vim.api.nvim_buf_get_name(0)
 
 				-- Configuration can be augmented and overridden by opts.jdtls
@@ -107,7 +98,7 @@ return {
 					cmd = opts.full_cmd(opts),
 					root_dir = opts.root_dir(fname),
 					init_options = {
-						bundles = bundles,
+						bundles = get_bundles(),
 						extendedClientCapabilities = {
 							actionableIncidentSupport = true,
 						},
@@ -131,20 +122,7 @@ return {
 							},
 
 							configuration = {
-								runtimes = {
-									-- {
-									-- 	name = "JavaSE-11",
-									-- 	path = home .. "/.sdkman/candidates/java/11.0.23-amzn/",
-									-- },
-									{
-										name = "17",
-										path = home .. "/.sdkman/candidates/java/17.0.17-amzn/",
-									},
-									{
-										name = "21",
-										path = home .. "/.sdkman/candidates/java/21.0.8-amzn/",
-									},
-								},
+								runtimes = java_runtimes,
 							},
 						},
 					},
@@ -208,7 +186,7 @@ return {
 							["<space>D"] = { vim.lsp.buf.type_definition, "Type Definition" },
 							["<space>rn"] = { vim.lsp.buf.rename, "Rename" },
 							["gr"] = { vim.lsp.buf.references, "References" },
-							["<space>ca"] = { require("telescope.builtin").lsp_code_actions, "Code Actions (Telescope)" },
+							["<space>ca"] = { vim.lsp.buf.code_action, "Code Actions" },
 						}, { mode = "n", buffer = args.buf })
 						wk.register({
 							["<leader>em"] = {

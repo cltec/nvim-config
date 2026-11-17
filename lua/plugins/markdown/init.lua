@@ -5,15 +5,23 @@ return {
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
     ft = { "markdown" },
     build = function(plugin)
-      if vim.fn.executable "npx" then
-        vim.cmd("!cd " .. plugin.dir .. " && cd app && npx --yes yarn install")
+      if vim.fn.executable("npx") == 1 then
+        -- npx is a .cmd wrapper on Windows, not a directly spawnable executable.
+        local command = vim.fn.has("win32") == 1
+          and { vim.env.ComSpec or "cmd.exe", "/d", "/s", "/c", "npx --yes yarn install" }
+          or { "npx", "--yes", "yarn", "install" }
+        local result = vim.system(command, {
+          cwd = plugin.dir .. "/app",
+          text = true,
+        }):wait()
+        assert(result.code == 0, result.stderr or "Markdown preview build failed")
       else
         vim.cmd [[Lazy load markdown-preview.nvim]]
         vim.fn["mkdp#util#install"]()
       end
     end,
     init = function()
-      if vim.fn.executable "npx" then vim.g.mkdp_filetypes = { "markdown" } end
+      vim.g.mkdp_filetypes = { "markdown" }
     end,
   },
 

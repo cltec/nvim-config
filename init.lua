@@ -7,13 +7,13 @@ vim.opt.softtabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
 
-if vim.fn.has("persistent_undo") then
-	local target_path = vim.fn.expand("~/.undodir")
+if vim.fn.has("persistent_undo") == 1 then
+	local target_path = vim.fn.stdpath("state") .. "/undo"
 
 	-- create the directory and any parent directories
 	-- if the location does not exist.
 	if vim.fn.isdirectory(target_path) == 0 then
-		vim.fn.mkdir(target_path, "p", 0700)
+		vim.fn.mkdir(target_path, "p", 448) -- 0700 in decimal (Lua has no octal literals)
 	end
 
 	vim.o.undodir = target_path
