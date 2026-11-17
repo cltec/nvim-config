@@ -11,6 +11,8 @@ return {
 			"nvim-treesitter/nvim-treesitter",
 			"nvim-neotest/neotest-python",
 			"nvim-neotest/neotest-go",
+			"marilari88/neotest-vitest",
+			"nvim-neotest/neotest-jest",
 			-- "rcasia/neotest-java",
 			"sidlatau/neotest-dart",
 		},
@@ -23,6 +25,8 @@ return {
 						-- Let neotest detect the project's virtualenv or system Python.
 					}),
 					require("neotest-go"),
+					require("config.typescript").test_adapter("vitest"),
+					require("config.typescript").test_adapter("jest"),
 					-- require("neotest-java"),
 					require("neotest-dart")({
 						command = "flutter",

@@ -47,7 +47,7 @@ return {
 					opts.ensure_installed = opts.ensure_installed or {}
 					vim.list_extend(
 						opts.ensure_installed,
-						{ "java-test", "java-debug-adapter", "gofumpt", "goimports", "debugpy" }
+						{ "java-test", "java-debug-adapter", "gofumpt", "goimports", "debugpy", "js-debug-adapter" }
 					)
 				end,
 			},
@@ -109,10 +109,11 @@ return {
 		keys = {
             {"<leader>od", function() vim.diagnostic.open_float() end, desc ="Open diagnostic in floating windows"},
         },
-		ft = { "go", "gomod", "gowork", "gosum", "lua", "markdown", "python", "typescript", "javascript" },
+		ft = { "go", "gomod", "gowork", "gosum", "lua", "markdown", "python", "typescript", "javascript", "typescriptreact", "javascriptreact" },
 		config = function()
 			require("fidget").setup({})
-			local servers = { "lua_ls", "ty", "marksman", "gopls", "ts_ls", "jdtls" }
+			local servers = { "lua_ls", "ty", "marksman", "gopls", "vtsls", "eslint", "jdtls" }
+			vim.lsp.enable("ts_ls", false)
 			local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 			vim.lsp.config("lua_ls", {
@@ -127,14 +128,25 @@ return {
 			vim.lsp.config("gopls", vim.tbl_deep_extend("force", require("plugins.lsps.go"), {
 				capabilities = capabilities,
 			}))
-            vim.lsp.config('ts_ls', {
+			vim.lsp.config("vtsls", {
 				capabilities = capabilities,
+				settings = { vtsls = { autoUseWorkspaceTsdk = true } },
+				on_attach = function(client)
+					-- formatter.nvim owns formatting; avoid competing LSP edits.
+					client.server_capabilities.documentFormattingProvider = false
+					client.server_capabilities.documentRangeFormattingProvider = false
+				end,
+			})
+			-- lspconfig starts ESLint only in projects with an ESLint config.
+			vim.lsp.config("eslint", {
+				capabilities = capabilities,
+				settings = { format = false, workingDirectory = { mode = "auto" } },
 			})
 
 			require("mason-lspconfig").setup({
 				ensure_installed = servers,
 				-- nvim-jdtls owns Java startup, workspaces, and debug bundles.
-				automatic_enable = { exclude = { "jdtls" } },
+				automatic_enable = { exclude = { "jdtls", "ts_ls" } },
 			})
 
 			-- Use LspAttach autocommand to only map the following keys

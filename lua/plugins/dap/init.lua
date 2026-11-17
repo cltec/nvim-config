@@ -25,8 +25,8 @@ return {
   -- stylua: ignore
 	keys = {
 		{
-			"<leader>dU", function() require('dap.ext.vscode').load_launchjs(nil, nil) end,
-			desc = "Update Debug Configurations",
+			"<leader>dU", function() vim.notify("DAP reads .vscode/launch.json automatically on each run") end,
+			desc = "Project Debug Configuration Info",
 		},
 		{
 			"<leader>dB", function() require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: ")) end,
@@ -93,11 +93,12 @@ return {
 			desc = "Widgets",
 		},
 		},
-		otps = {},
+		opts = {},
 		-- config = function()
 		--     vim.api.nvim_set_hl(0, "DapStoppedLine", { default = true, link = "Visual" })
 		-- end
 		config = function()
+			require("config.javascript-debug").setup()
 			require("cmp").setup({
 				enabled = function()
 					return vim.api.nvim_buf_get_option(0, "buftype") ~= "prompt" or require("cmp_dap").is_dap_buffer()

@@ -13,6 +13,12 @@ return {
 	config = function()
 		require("formatter").setup({
 			filetype = {
+				javascript = { require("config.typescript").formatter },
+				javascriptreact = { require("config.typescript").formatter },
+				typescript = { require("config.typescript").formatter },
+				typescriptreact = { require("config.typescript").formatter },
+				json = { require("config.typescript").formatter },
+				jsonc = { require("config.typescript").formatter },
 				lua = {
 					require("formatter.filetypes.lua").stylua,
 				},
